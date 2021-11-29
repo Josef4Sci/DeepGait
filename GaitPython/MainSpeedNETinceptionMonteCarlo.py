@@ -1,43 +1,28 @@
 import gc
+import os
 
-from vrae.utils import *
-import torch
+from Utils.utils import *
 from datetime import datetime
-from InceptionSpeedNET import InceptionSpeedNET
-import sys
-from myUtils import TensorboardLogger
+from Models.InceptionSpeedNET import InceptionSpeedNET
+from Utils.myUtils import TensorboardLogger
+import Utils.Constants
 import argparse
-import numpy
 import random
-
-# tensorboard --logdir=G:\deepLearn\localLog\compare --host localhost --port 8088
-# chzba 0.043 /media/data2/justjo/datasets/jednokolka/ 2 16 /home/justjo/timeseries-clustering-vae/log/LogInception/
-
-# --datasetBasePath  G:/deepLearn/jednokolka/ --logPath G:\deepLearn\localLog\perceiver\ --logPath2 G:\deepLearn\localLog\perceiverAll\ --cuda 0 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L' --startfromsubj 0
-#        --cuda 0 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L'
-
-# --datasetBasePath /media/data2/justjo/datasets/jednokolka/ --logPath /home/justjo/timeseries-clustering-vae/log/Perceiver/ --logPath2 /home/justjo/timeseries-clustering-vae/log/PerceiverAll/
-#       --cuda 2 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L' --startfromsubj 0
-
-# --datasetBasePath C:/Users/josef/PycharmProjects/jednokolka/ --logPath2 C:/Users/josef/PycharmProjects/Log/perceiverAll/
-# --logPath C:/Users/josef/PycharmProjects/Log/perceiver/ --cuda 0 --sensor 0 --learningRate 0.001 --tag MonteCarlo --mess 'MonteCarlo-startFrom1' --startfromsubj 1 --LogParamLoadPath C:\Users\josef\PycharmProjects\Log\perceiverAll\-2021-08-01-01-45-'MonteCarlo'\
 
 
 if __name__ == "__main__":
-    # --datasetBasePath  G:/deepLearn/jednokolka/ --logPath G:\deepLearn\localLog\perceiver --logPath2 G:\deepLearn\localLog\perceiverAll --cuda 0 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L'
+
     parser = argparse.ArgumentParser(add_help=False, description='Process some integers.')
-    parser.add_argument('--datasetBasePath', help='Path1')
-    parser.add_argument('--logPath', help='Array of integers')
-    parser.add_argument('--logPath2', help='Array of integers')
-    parser.add_argument('--cuda', help='Array of integers', type=int)
-    # parser.add_argument('--latent', help='Array of integers', type=int)
-    parser.add_argument('--sensors', help='Array of integers', nargs='+', type=int)
-    parser.add_argument('--learningRate', help='Array of integers', type=float)
-    parser.add_argument('--tag', help='Array of integers')
-    parser.add_argument('--mess', help='Array of integers')
-    parser.add_argument('--startfromsubj', default=0, help='Array of integers', type=int)
-    parser.add_argument('--LogParamLoadPath', help='Array of integers')
-    parser.add_argument('--rep', help='Array of integers')
+    parser.add_argument('--datasetBasePath', default="../Bipedal-Motion-Dataset/")
+    parser.add_argument('--logPath', default="../Logs/SineIndividual/")
+    parser.add_argument('--logPath2', default="../Logs/SineMonteCarlo/")
+    parser.add_argument('--cuda', type=int, default=0)
+    parser.add_argument('--sensors', nargs='+', type=int, default=[0, 1, 2])
+    parser.add_argument('--learningRate', type=float, default=0.001)
+    parser.add_argument('--startfromsubj', type=int, default=0)
+    parser.add_argument('--testnet', default=None)
+    parser.add_argument('--LogParamLoadPath', default=None)
+    parser.add_argument('--rep', type=int, default=1)
 
     args = parser.parse_args()
 
@@ -91,7 +76,7 @@ if __name__ == "__main__":
 
         print("Program start time =", datetime.now().strftime("%H:%M:%S"))
 
-        sub_num = get_number_of_subjects('separBig', base=datasetBasePath)
+        sub_num = get_number_of_subjects(Utils.Constants.DATA_FOLDER, base=datasetBasePath)
 
         logger = TensorboardLogger(args.logPath2, mess=args.mess)
         logger.log_txt("n_filters ", n_filters)
@@ -121,7 +106,7 @@ if __name__ == "__main__":
 
             gc.collect()
 
-            train_dataset, test_dataset, valid_dataset = open_data_pickle_one_wheele_separated_validation('separBig', i,
+            train_dataset, test_dataset, valid_dataset = open_data_pickle_one_wheele_separated_validation(Utils.Constants.DATA_FOLDER, i,
                                                                                                           base=datasetBasePath)
 
             test_dataset_sub = TensorDataset(test_dataset.tensors[0][:, :, listSens],

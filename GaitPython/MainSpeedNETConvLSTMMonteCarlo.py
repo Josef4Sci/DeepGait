@@ -1,34 +1,29 @@
 import gc
 
-import myUtils
-from vrae.utils import *
+from Utils import myUtils
+from Utils.utils import *
 from datetime import datetime
-from SpeedNetConvLSTM import SpeedNetConvLSTM
-from myUtils import TensorboardLogger
+from Models.SpeedNetConvLSTM import SpeedNetConvLSTM
+from Utils.myUtils import TensorboardLogger
+import Utils.Constants
 import argparse
 import random
 
-# tensorboard --logdir=G:\deepLearn\localLog\compare --host localhost --port 8088
-# chzba 0.043 /media/data2/justjo/datasets/jednokolka/ 2 16 /home/justjo/timeseries-clustering-vae/log/LogInception/
 
-# --datasetBasePath  G:/deepLearn/jednokolka/ --logPath G:\deepLearn\localLog\perceiver\ --logPath2 G:\deepLearn\localLog\perceiverAll\ --cuda 0 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L' --startfromsubj 0
-#        --cuda 0 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L'
-
-#--datasetBasePath /media/data2/justjo/datasets/jednokolka/ --logPath /home/justjo/timeseries-clustering-vae/log/Perceiver/ --logPath2 /home/justjo/timeseries-clustering-vae/log/PerceiverAll/
-#       --cuda 2 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L' --startfromsubj 0
 if __name__ == "__main__":
-#--datasetBasePath  G:/deepLearn/jednokolka/ --logPath G:\deepLearn\localLog\perceiver --logPath2 G:\deepLearn\localLog\perceiverAll --cuda 0 --sensor 0 --latent 64  --learningRate 0.001 --tag MAE-S0-latent128 --mess 'Perc-64L'
-    parser = argparse.ArgumentParser(add_help=False, description='Process some integers.')
-    parser.add_argument('--datasetBasePath', help='Path1')
-    parser.add_argument('--logPath', help='Array of integers')
-    parser.add_argument('--logPath2', help='Array of integers')
-    parser.add_argument('--cuda', help='Array of integers', type=int)
-    parser.add_argument('--sensors', help='Array of integers', nargs='+', type=int)
-    parser.add_argument('--learningRate', help='Array of integers', type=float)
-    parser.add_argument('--startfromsubj',  default=0, help='Array of integers', type=int)
-    parser.add_argument('--LogParamLoadPath', help='Array of integers')
-    parser.add_argument('--testnet', help='Array of integers', type=bool, default=False)
-    parser.add_argument('--rep', help='Array of integers')
+
+    parser = argparse.ArgumentParser(add_help=False, description='')
+
+    parser.add_argument('--datasetBasePath', default="../Bipedal-Motion-Dataset/")
+    parser.add_argument('--logPath', default="../Logs/SineIndividual/")
+    parser.add_argument('--logPath2', default="../Logs/SineMonteCarlo/")
+    parser.add_argument('--cuda', type=int, default=0)
+    parser.add_argument('--sensors', nargs='+', type=int, default=[0, 1, 2])
+    parser.add_argument('--learningRate', type=float, default=0.001)
+    parser.add_argument('--startfromsubj', type=int, default=0)
+    parser.add_argument('--testnet', default=None)
+    parser.add_argument('--LogParamLoadPath', default=None)
+    parser.add_argument('--rep', type=int, default=1)
 
     args = parser.parse_args()
 
@@ -51,13 +46,10 @@ if __name__ == "__main__":
 
     args.mess = myUtils.getMonteCarloNextFolder(args.logPath2)
 
-    if not args.rep:
-        args.rep = 1
-
     for x in range(int(args.rep)):
 
         hidden_size = random.choice([128, 256, 512])
-        latent_length = random.choice([64, 128, 256])  #
+        latent_length = random.choice([64, 128, 256])
         hidden_layer_depth = 1  # random.choice([1, 2])
         lossSpeed = random.choice([0.1, 0.01, 0.001, 0.0001])
         conv_channels = random.choice([8, 16])
@@ -67,7 +59,7 @@ if __name__ == "__main__":
         if not args.testnet:
             print("Program start time =", datetime.now().strftime("%H:%M:%S"))
 
-            sub_num = get_number_of_subjects('separBig', base=datasetBasePath)
+            sub_num = get_number_of_subjects(Utils.Constants.DATA_FOLDER, base=datasetBasePath)
 
             if args.LogParamLoadPath:
                 pathLog = args.LogParamLoadPath + 'log.txt'
@@ -125,7 +117,7 @@ if __name__ == "__main__":
                     del model
 
                 gc.collect()
-                train_dataset, test_dataset, valid_dataset = open_data_pickle_one_wheele_separated_validation('separBig', i, base=datasetBasePath)
+                train_dataset, test_dataset, valid_dataset = open_data_pickle_one_wheele_separated_validation(Utils.Constants.DATA_FOLDER, i, base=datasetBasePath)
 
                 test_dataset_sub=TensorDataset(test_dataset.tensors[0][:, :, listSens],
                                                test_dataset.tensors[1], test_dataset.tensors[2], test_dataset.tensors[3])
